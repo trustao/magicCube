@@ -27,7 +27,10 @@ function MagicCube(el,options) {
         document.body.appendChild(this.wrapper)
     }
     this.isRun = false
+    this.isRe = false
+    this.isFirst = false
     this.wrapper.className = 'cubeWrapper'
+    this._stepArr = []
     this.init() // 初始化
 }
 MagicCube.prototype={
@@ -153,14 +156,13 @@ MagicCube.prototype={
         this.wrapper.onmousedown = function(e){
             e = e || event;
             console.log(me.isRun)
-            if(me.isRun){
+            if(me.isRun||me.isRe){
                 return
             }
             console.log('执行了')
             if(e.target.COLOR<0){
                 return
             }
-            var colorChange = me.colorChange.bind(me) //保证this指向正确
             var startBlock = e.target
             var className =''                                           // 可能旋转的格子name，提示作用
             var elseC = ''                                                  // 点击正面name,用来排除正面旋转的可能
@@ -228,49 +230,61 @@ MagicCube.prototype={
                     }
                 }
             }
-            me.wrapper.onmouseup = function (e) {
+            document.onmouseup = function (e) {
                 e = e || event
-                direct = direct>0?1:direct<0?-1:0
-                if(e.target.loc.f == 4 ||e.target.loc.f ==5||e.target.loc.f ==6 ){
-                    direct = -direct
-                }
-                console.log(direct)
-                if(direct){
-                    var roller = /[a-z]/.exec(mcName)[0]
-                    var mArr = me.getArr(moveCells,roller,me)  // 获取旋转表面的数组
-                    var arr = mArr[0]  // 侧面
-                    var arr2 = mArr[1] // 整体面
-                    if(e.target.loc.f ==1&&roller =='x'){
-                        direct = -direct
-                    }
-
-                    Array.prototype.slice.call(moveCells).forEach(function (item) {
-                        var text = item.style.transform
-                        me.isRun = true
-                        item.style.transition = "transform "+me._options.transitionTime+"s linear";
-                        item.style.transform = text +'rotate'+roller+'('+-direct*90+'deg)'
-                        item.addEventListener('transitionend',function () {
-                            me.isRun = false
-                            this.style.transition = ''
-                            var it = this
-//                                setTimeout(function () {  //异步执行 防止transition为
-                            if(colorChange){
-                                //确保只执行一次
-                                colorChange(arr,direct,arr2)
-                                colorChange = null
-                            }
-                            it.style.transform = text   //位置返回原状态
-//                                },0)
-                        })
-                    })
-                }
                 Array.prototype.slice.call(me.wrapper.querySelectorAll('div')).forEach(function (face) {
                     face.style.boxShadow = ''
                 })
-                me.wrapper.onmousemove = me.wrapper.onmouseup = null
+                me.wrapper.onmousemove = document.onmouseup = null
+                if(direct){
+                    if(!e.target.loc || e.target.loc.f !== startBlock.loc.f){
+                        return
+                    }
+                    var roller = /[a-z]/.exec(mcName)[0] //获得转动轴
+                    direct = direct>0?1:direct<0?-1:0
+                    if(e.target.loc.f === 4 ||e.target.loc.f ===5||e.target.loc.f ===6 ){          //方向修正为 视角上的顺逆时针
+                        direct = -direct
+                    }
+                    if(roller==='x'&&(e.target.loc.f ===1||e.target.loc.f ===6)){
+                        direct = -direct
+                    }
+                    me._stepArr.push({mcName:mcName,direct:direct})
+                    me.step(mcName,direct,moveCells,roller)
+                }
             }
             return false
         }
+    },
+    step : function(mcName,direct,moveCells,roller) {
+        var me = this
+        var colorChange = me.colorChange.bind(me)
+        if(!moveCells){
+            moveCells = document.querySelectorAll('.cell'+mcName)
+        }
+        if(!roller){
+            roller = /[a-z]/.exec(mcName)[0]
+        }
+        var mArr = me.getArr(moveCells,roller,me)  // 获取旋转表面的数组
+        var arr = mArr[0]  // 侧面
+        var arr2 = mArr[1] // 整体面'
+        Array.prototype.slice.call(moveCells).forEach(function (item) {
+            var text = item.style.transform
+            me.isRun = true
+            item.style.transition = "transform "+me._options.transitionTime+"s linear";
+            item.style.transform = text +'rotate'+roller+'('+-direct*90+'deg)'
+            item.addEventListener('transitionend',end)
+            function end() {
+                me.isRun = false
+                this.style.transition = ''
+                if(colorChange){
+                    //确保只执行一次
+                    colorChange(arr,direct,arr2)
+                    colorChange = null
+                }
+                this.style.transform = text   //位置返回原状态
+                this.removeEventListener('transitionend',end) //每次执行完后解绑
+            }
+        })
     },
     colorChange: function (arr,direct,arr2) {
         var a = []
@@ -443,5 +457,24 @@ MagicCube.prototype={
             }
         }
         return [arr,arr2]
+    },
+    restoration:function () {
+        if(this.isFirst){
+            return
+        }
+        this.isFirst = true
+        var me = this
+        re()
+        function re() {
+            if(me._stepArr.length<=0){
+                me.isRe = false
+                me.isFirst = false
+                return
+            }
+            me.isRe = true
+            var lastSetp = me._stepArr.pop()
+            me.step(lastSetp.mcName,-lastSetp.direct)
+            setTimeout(re,800)
+        }
     }
 }

@@ -4,13 +4,31 @@
     <meta charset="UTF-8">
     <title>Title</title>
     <style type="text/css">
-
+        #wrapper{
+            width: 500px;
+            height: 500px;
+            background-color: rebeccapurple;
+        }
+        #aaa{
+            width: 200px;
+            height: 200px;
+            background-color: aqua;
+        }
+        #bbb{
+            width: 200px;
+            height: 200px;
+            background-color: wheat;
+        }
     </style>
 </head>
 <body>
-<script type="text/javascript" src="../src/magicCube.js"></script>
-<script type="text/javascript">
-    new MagicCube()
-</script>
+    <button onclick="fff()">复位</button>
+    <script type="text/javascript" src="../src/magicCube.js"></script>
+    <script type="text/javascript">
+       var mc = new MagicCube()
+        function fff() {
+            mc.restoration()
+        }
+    </script>
 </body>
 </html>
