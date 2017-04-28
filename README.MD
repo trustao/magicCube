@@ -10,4 +10,11 @@
  *      borderWidth:number; 边框宽度
  *      borderColor:string; 边框颜色;
  *      transitionTime:number; 过渡时间
- 
+
+
+
+ #实例方法：
+### step(mcName,direction) 转动一步
+        mcName:转动块的类名  e.g. "x1" 、 "y2"
+        direction:+1或-1 顺时针逆时针
+###restoration() 复位

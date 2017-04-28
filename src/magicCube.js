@@ -248,8 +248,10 @@ MagicCube.prototype={
                     if(roller==='x'&&(e.target.loc.f ===1||e.target.loc.f ===6)){
                         direct = -direct
                     }
-                    me._stepArr.push({mcName:mcName,direct:direct})
-                    me.step(mcName,direct,moveCells,roller)
+                    if(mcName){
+                        me._stepArr.push({mcName:mcName,direct:direct})
+                        me.step(mcName,direct,moveCells,roller)
+                    }
                 }
             }
             return false
